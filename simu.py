@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 from LRFutils import progress
 from LRFutils import archive
 import analyze
-#bonjour
 
 # %% [markdown]
 # ---
