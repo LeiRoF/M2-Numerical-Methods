@@ -3,7 +3,7 @@ from numpy import *
 import matplotlib.pyplot as plt
 from LRFutils import progress
 from LRFutils import archive
-import analyze
+import animation
 
 # %% [markdown]
 # ---
@@ -210,6 +210,6 @@ for i, simulation_step in enumerate(linspace(0,simulation_time,1000)):
     a(i+1)
 
 path = archive.new()
-analyze.generate_animation(evolution, save_as = f"{path}/Evolution.gif", plot=False, verbose = False)
+animation.generate_animation(evolution, save_as = f"{path}/Evolution.gif", plot=False, verbose = False)
 
 
