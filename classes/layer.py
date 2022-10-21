@@ -1,7 +1,13 @@
 from numpy import *
+from typen import enforce_type_hints
 
 class Layer:
-    def __init__(self, L):
+
+    # ________________________________________________________________________________
+    # Create a new virtual substrate
+
+    @enforce_type_hints
+    def __init__(self, L:int):
         self.L = L
         self.grid = []
         for i in range(L):
@@ -9,6 +15,11 @@ class Layer:
             for j in range(L):
                 self.grid[i].append([])
         self.islands = []
+
+
+
+    # ________________________________________________________________________________
+    #  Get all elements on this layer
     
     def elements(self):
         monomers = []
@@ -26,11 +37,26 @@ class Layer:
                             islands.append(monomerList[0].island)
         return monomers, islands
 
+
+
+    # ________________________________________________________________________________
+    # Get the free monomers on this layer
+
     def monomers(self):
         return self.elements()[0]
 
+
+    
+    # ________________________________________________________________________________
+    #  Get the islands on this layer
+
     def islands(self):
         return self.elements()[1]
+
+    
+
+    # ________________________________________________________________________________
+    #  Return a matrix of LxL with the number of monomer (free or in island) per cell
 
     def heightmap(self):
         heightmap = zeros((self.L,self.L))
@@ -39,6 +65,11 @@ class Layer:
                 if self.grid[x][y] != []:
                     heightmap[x][y] = len(self.grid[x][y])
         return heightmap
+
+
+
+    # ________________________________________________________________________________
+    #  Definition of the boundary conditions
 
     def corrected_pos(self, x):
         if x < 0:
