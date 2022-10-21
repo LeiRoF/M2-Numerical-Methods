@@ -36,7 +36,7 @@ class Island:
     # Replace this island by a new one and return the number of edited monomers
     
     @enforce_type_hints
-    def replace(self, island: Island) -> int:
+    def replace(self, island: "Island") -> int:
         cpt = 0
         if island is self:
             return 0

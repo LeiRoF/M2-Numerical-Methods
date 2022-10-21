@@ -57,6 +57,8 @@ class Monomer:
 
         return count
 
+
+
     # ________________________________________________________________________________
     # Stick monomers to form an island
 

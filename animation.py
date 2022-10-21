@@ -7,14 +7,33 @@ from matplotlib.colors import Colormap
 from numpy import *
 from matplotlib.lines import Line2D
 import data
+import numpy as np
 
-def generate(evolution, monomer, free, stuk, island, occuped_space, save_as = None, plot=False, verbose = False, axis:int=0):
+def generate(evolution, monomer, free, stuck, island, occuped_space, save_as = None, plot=False, verbose = False, axis:int=0):
 
-    fig = plt.figure(figsize=(10, 10))
-    ax1 = fig.add_subplot(2, 2, 1)
-    ax2 = fig.add_subplot(2, 2, 2)
-    ax3 = fig.add_subplot(2, 2, 3)
-    ax4 = fig.add_subplot(2, 2, 4)
+    evolution = np.array(evolution)
+    monomer = np.array(monomer)
+    free = np.array(free)
+    stuck = np.array(stuck)
+    island = np.array(island)
+    occuped_space = np.array(occuped_space)
+
+    L = evolution[0].shape[0]
+
+    fig = plt.figure(figsize=(15, 10))
+    ax1 = fig.add_subplot(2, 3, 1)
+    ax1.set_title("Evolution")
+    ax2 = fig.add_subplot(2, 3, 2)
+    ax2.set_title("Population")
+    ax3 = fig.add_subplot(2, 3, 3)
+    ax3.set_title("Coeficients")
+    ax4 = fig.add_subplot(2, 3, 4)
+    ax4.set_title("Event occurence")
+    ax5 = fig.add_subplot(2, 3, 5)
+    ax5.set_title("Population (density)")
+    ax6 = fig.add_subplot(2, 3, 6)
+    ax6.set_title("Event (proportion)")
+
 
     i=0
 
@@ -23,7 +42,7 @@ def generate(evolution, monomer, free, stuk, island, occuped_space, save_as = No
 
     # Init 2nd plot
     ax2.set_xlim(0, len(evolution))
-    ax2.set_ylim(0, max(max(monomer), max(free), max(stuk), max(island)))
+    ax2.set_ylim(0, max(max(monomer), max(free), max(stuck), max(island)))
     line1 = Line2D([], [], label="Monomers", color="red")
     line2 = Line2D([], [], label="Free monomers", color="blue")
     line3 = Line2D([], [], label="Stuck monomers", color="green")
@@ -67,6 +86,33 @@ def generate(evolution, monomer, free, stuk, island, occuped_space, save_as = No
     ax4.add_line(line_d)
     ax4.add_line(line_ah)
 
+    # Init 5th plot
+    ax5.set_xlim(0, len(evolution)) 
+    ax5.set_ylim(0, 1)
+    line1_density = Line2D([], [], label="Monomers", color="red")
+    line2_density = Line2D([], [], label="Free monomers", color="blue")
+    line3_density = Line2D([], [], label="Stuck monomers", color="green")
+    line4_density = Line2D([], [], label="Occuped space", color="black")
+    line5_density = Line2D([], [], label="Islands", color="orange")
+    ax5.add_line(line1_density)
+    ax5.add_line(line2_density)
+    ax5.add_line(line3_density)
+    ax5.add_line(line4_density)
+    ax5.add_line(line5_density)
+
+    # Init 6th plot
+    ax6.set_xlim(0, len(evolution))
+    ax6.set_ylim(0, 1)
+    line_a_prop = Line2D([], [], label="Deposition", color="blue")
+    line_b_prop = Line2D([], [], label="Diffusion", color="orange")
+    line_c_prop = Line2D([], [], label="Nucleation", color="green")
+    line_d_prop = Line2D([], [], label="Attachement", color="red")
+    line_ah_prop = Line2D([], [], label="Deposition on monomer", color="black")
+    ax6.add_line(line_a_prop)
+    ax6.add_line(line_b_prop)
+    ax6.add_line(line_c_prop)
+    ax6.add_line(line_d_prop)
+    ax6.add_line(line_ah_prop)
 
     # Generate frames
     progress_bar = progress.Bar(max=len(evolution), prefix="Generating animation")
@@ -79,12 +125,12 @@ def generate(evolution, monomer, free, stuk, island, occuped_space, save_as = No
         # Update 2nd plot
         line1.set_data(arange(i), monomer[:i])
         line2.set_data(arange(i), free[:i])
-        line3.set_data(arange(i), stuk[:i])
+        line3.set_data(arange(i), stuck[:i])
         line4.set_data(arange(i), occuped_space[:i])
         line5.set_data(arange(i), island[:i])
         # ax2.plot(i, monomer[i], 'rx', label="Monomers")
         # ax2.plot(i, free[i], 'g+', label="Free monomers")
-        # ax2.plot(i, stuk[i], 'b4', label="Stuck monomers")
+        # ax2.plot(i, stuck[i], 'b4', label="Stuck monomers")
         # ax2.plot(i, occuped_space[i], 'k1', label="Occuped space")
         # ax2.plot(i, island[i], 'y.', label="Islands")
 
@@ -99,6 +145,22 @@ def generate(evolution, monomer, free, stuk, island, occuped_space, save_as = No
         line_c.set_data(arange(i), c[:i])
         line_d.set_data(arange(i), d[:i])
         line_ah.set_data(arange(i), ah[:i])
+
+        # Update 5th plot
+        line1_density.set_data(arange(i), monomer[:i] / (L**2))
+        line2_density.set_data(arange(i), free[:i] / (L**2))
+        line3_density.set_data(arange(i), stuck[:i] / (L**2))
+        line4_density.set_data(arange(i), occuped_space[:i] / (L**2))
+        line5_density.set_data(arange(i), island[:i] / (L**2))
+
+        s = a[:i] + b[:i] + c[:i] + d[:i] + ah[:i]
+
+        # Update 6th plot
+        line_a_prop.set_data(arange(i), a[:i] / s)
+        line_b_prop.set_data(arange(i), b[:i] / s)
+        line_c_prop.set_data(arange(i), c[:i] / s)
+        line_d_prop.set_data(arange(i), d[:i] / s)
+        line_ah_prop.set_data(arange(i), ah[:i] / s)
 
         progress_bar(i+1)
         return im,
@@ -116,6 +178,14 @@ def generate(evolution, monomer, free, stuk, island, occuped_space, save_as = No
     # Adding 4th plot properties
     ax4.grid()
     ax4.legend()
+
+    # Adding 5th plot properties
+    ax5.grid()
+    ax5.legend()
+
+    # Adding 6th plot properties
+    ax6.grid()
+    ax6.legend()
 
     # __________________________________________________
     # Saving animation
