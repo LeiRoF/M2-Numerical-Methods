@@ -24,6 +24,8 @@ class Monomer:
         self.layer = layer
         self.island = None
         data.a += 1 # deposition event
+        self.visited_sites = []
+        self.displacements = 0
         
         # Place the monomer randomly on the layer
         if x is None:
@@ -41,6 +43,8 @@ class Monomer:
         # Check if the monomer arrive on another one
         if self.islandify():
             data.ah += 1 # deposition on top of another monomer event
+        # else:
+        self.visited_sites.append((self.x, self.y))
 
 
 
@@ -149,10 +153,14 @@ class Monomer:
         self.x, self.y = x, y
 
         # Check if it colided another monomer
-        self.islandify()
+        if not self.islandify():
+            # if not, it add the new location to the list of visited sites
+            if (x, y) not in self.visited_sites:
+                self.visited_sites.append((x, y))
+            self.displacements += 1
 
-        # Diffusion event
-        data.b += 1
+            # Diffusion event
+            data.b += 1
 
         return True # The monomer has moved
 

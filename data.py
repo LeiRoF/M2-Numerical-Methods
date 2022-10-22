@@ -40,6 +40,7 @@ def get_k3():
 
 _record = []
 def record() -> dict[str, int | float]:
+    global a,b,c,d,e,f,g,h,i,ah
     current = {
         'a': a, # ok
         'b': b, # ok
@@ -56,6 +57,16 @@ def record() -> dict[str, int | float]:
         'k3': get_k3(), # ok
     }
     _record.append(current)
+    a = 0 # deposition
+    b = 0 # diffusion
+    c = 0 # nucleation
+    d = 0 # attachment
+    e = 0 # detachment
+    f = 0 # edge diffusion
+    g = 0 # diffusion down step
+    h = 0 # nucleation on top of island
+    i = 0 # dimer diffusion
+    ah = 0 # deposition on top of island
     return current
 
 
@@ -101,3 +112,11 @@ def get_k2_evolution() -> list[float]:
 
 def get_k3_evolution() -> list[float]:
     return np.array([r['k3'] for r in _record])
+
+def smooth(lst: list[float], average_elements:int = 100) -> float:
+    res = np.zeros(len(lst))
+    for i in range(len(lst)):
+        a = max(int(i-(average_elements/2)),0)
+        b = min(int(i+(average_elements/2)), len(lst))
+        res[i] = np.average(lst[a:b])
+    return res
