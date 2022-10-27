@@ -21,9 +21,9 @@ def setup(F, D1, L, steps, number_of_simulations):
     ax1.set_title("Monomer properties")
     ax2 = fig.add_subplot(2, 3, 2)
     ax2.set_title("Population")
-    ax3 = fig.add_subplot(2, 3, 3)
+    ax3 = fig.add_subplot(2, 3, 4)
     ax3.set_title("Coeficients")
-    ax4 = fig.add_subplot(2, 3, 4)
+    ax4 = fig.add_subplot(2, 3, 3)
     ax4.set_title("Event occurence")
     ax5 = fig.add_subplot(2, 3, 5)
     ax5.set_title("Population (density)")
@@ -49,6 +49,14 @@ def record(
     islands,
     visited_sites,
     average_displacements,
+    a,
+    b,
+    c,
+    d,
+    ah,
+    k1,
+    k2,
+    k3,
     alpha = 1,
     simu = 0
 ):
@@ -90,9 +98,6 @@ def record(
     # ______________________________
     # Update 3rd plot
 
-    k1 = data.get_k1_evolution()
-    k2 = data.get_k2_evolution()
-    k3 = data.get_k3_evolution()
     plots = [
         ax3.plot(data.smooth(by), data.smooth(k1), "b", alpha=alpha)[0],
         ax3.plot(data.smooth(by), data.smooth(1/array(visited_sites)), "g", alpha=alpha)[0],
@@ -107,11 +112,6 @@ def record(
     # ______________________________
     # Update 4th plot
 
-    a = data.get_a_evolution()
-    b = data.get_b_evolution()
-    c = data.get_c_evolution()
-    d = data.get_d_evolution()
-    ah = data.get_ah_evolution()
     plots = [
         ax4.plot(data.smooth(by), data.smooth(a), "b", alpha=alpha)[0],
         ax4.plot(data.smooth(by), data.smooth(b), "g", alpha=alpha)[0],

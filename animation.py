@@ -20,8 +20,8 @@ def generate(evolution, monomer, free, stuck, island, occuped_space, save_as = N
 
     L = evolution[0].shape[0]
 
-    fig = plt.figure(figsize=(15, 10))
-    ax1 = fig.add_subplot(2, 3, 1)
+    fig = plt.figure(figsize=(10, 10))
+    ax1 = fig.add_subplot(1, 1, 1)
     ax1.set_title("Evolution")
     # ax2 = fig.add_subplot(2, 3, 2)
     # ax2.set_title("Population")

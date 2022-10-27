@@ -43,7 +43,7 @@ def run_step(layer, F, D1):
 # ________________________________________________________________________________
 # Run an entire simulation
 
-def run(L, D1, F, N, steps, save = False, verbose = True, animation= True, parent_bar = None):
+def run(L, D1, F, N, steps, save = False, verbose = True, animate= True, parent_bar = None):
 
     layer = Layer(L)
     evolution = []
@@ -84,7 +84,8 @@ def run(L, D1, F, N, steps, save = False, verbose = True, animation= True, paren
         average_displacements.append(mean([x.displacements for x in just_islanded]))
 
         data.record()
-        if verbose: pbar(i+1)
+        if verbose:
+            pbar(i+1)
 
     # Saving the simulation data
     if save:
@@ -95,7 +96,7 @@ def run(L, D1, F, N, steps, save = False, verbose = True, animation= True, paren
 
         savez_compressed(f"{path}/Evolution.npy")
 
-    if animation:
+    if animate:
         animation.generate(evolution, monomers, free_monomers, stuck_monomers, islands, occuped_space, save_as = "res/animation.gif", plot=False, verbose = False)
 
 

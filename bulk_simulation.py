@@ -40,8 +40,24 @@ def run(mode, L, D1, F, N, steps, number_of_simulations):
     # Clearing plots
     multiplot.setup(F, D1, L, steps, number_of_simulations)
 
+    monomers = []
+    free_monomers = []
+    stuck_monomers = []
+    occuped_space = []
+    islands = []
+    visited_sites = []
+    average_displacements = []
+    a = []
+    b = []
+    c = []
+    d = []
+    ah = []
+    k1 = []
+    k2 = []
+    k3 = []
+
     # Creating a progress bar
-    pbar = progress.Bar(number_of_simulations, prefix="Bulk simulations", average_ETA=number_of_simulations)
+    pbar = progress.Bar(number_of_simulations, prefix="Bulk simulations")
     pbar(0)
 
     # Running several simulations
@@ -54,29 +70,77 @@ def run(mode, L, D1, F, N, steps, number_of_simulations):
         clear()
         
         # Running one simulation
-        evolution, monomers, free_monomers, stuck_monomers, occuped_space, islands, visited_sites, average_displacements = simulation.run(L, D1, F, N, steps, save = number_of_simulations == 1, verbose = number_of_simulations == 1, animation = i==0, parent_bar = pbar)
+        res = simulation.run(L, D1, F, N, steps, save = number_of_simulations == 1, verbose = number_of_simulations == 1, animate = i==0, parent_bar = pbar)
+        monomers.append(res[1])
+        free_monomers.append(res[2])
+        stuck_monomers.append(res[3])
+        occuped_space.append(res[4])
+        islands.append(res[5])
+        visited_sites.append(res[6])
+        average_displacements.append(res[7])
+
+        a.append(data.get_a_evolution())
+        b.append(data.get_b_evolution())
+        c.append(data.get_c_evolution())
+        d.append(data.get_d_evolution())
+        ah.append(data.get_ah_evolution())
+        k1.append(data.get_k1_evolution())
+        k2.append(data.get_k2_evolution())
+        k3.append(data.get_k3_evolution())
 
         # Getting x axis data
         if mode == "density":
-            by = array(occuped_space) / (L**2)
+            by = array(mean(occuped_space, axis=0)) / (L**2)
         if mode == "iteration":
             by = arange(steps)
 
-        # Plotting data
+        # Plotting data for each simulation
         multiplot.record(
             L = L,
             by = by,
             by_name = mode,
-            monomers = monomers,
-            free_monomers = free_monomers,
-            stuck_monomers = stuck_monomers,
-            occuped_space = occuped_space,
-            islands = islands,
-            visited_sites = visited_sites,
-            average_displacements = average_displacements,
+            monomers = monomers[-1],
+            free_monomers = free_monomers[-1],
+            stuck_monomers = stuck_monomers[-1],
+            occuped_space = occuped_space[-1],
+            islands = islands[-1],
+            visited_sites = visited_sites[-1],
+            average_displacements = average_displacements[-1],
+            a = a[-1],
+            b = b[-1],
+            c = c[-1],
+            d = d[-1],
+            ah = ah[-1],
+            k1 = k1[-1],
+            k2 = k2[-1],
+            k3 = k3[-1],
             alpha = 0.01,
-            simu = i
+            simu = i+1 if number_of_simulations > 1 else i
         )
+
+    # Plotting average of data
+    multiplot.record(
+        L = L,
+        by = by,
+        by_name = mode,
+        monomers = mean(monomers, axis=0),
+        free_monomers = mean(free_monomers, axis=0),
+        stuck_monomers = mean(stuck_monomers, axis=0),
+        occuped_space = mean(occuped_space, axis=0),
+        islands = mean(islands, axis=0),
+        visited_sites = mean(visited_sites, axis=0),
+        average_displacements = mean(average_displacements, axis=0),
+        a = mean(a, axis=0),
+        b = mean(b, axis=0),
+        c = mean(c, axis=0),
+        d = mean(d, axis=0),
+        ah = mean(ah, axis=0),
+        k1 = mean(k1, axis=0),
+        k2 = mean(k2, axis=0),
+        k3 = mean(k3, axis=0),
+        alpha = 1,
+        simu = 0
+    )
     
     multiplot.save(mode)
     multiplot.show()
