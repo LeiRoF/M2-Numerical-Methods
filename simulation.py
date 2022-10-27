@@ -3,7 +3,6 @@ from numpy import *
 from LRFutils import progress
 from LRFutils import archive
 from numba import njit
-import gc
 import os
 import json
 import matplotlib.pyplot as plt
@@ -16,19 +15,15 @@ from classes.monomer import Monomer
 # import program modules
 import simulation
 import data
-from config import *
+import animation
 
-def clear():
-    plt.clf()
-    for obj in gc.get_objects():
-        if isinstance(obj, Monomer) or isinstance(obj, Island) or isinstance(obj, Layer):
-            del obj
-    Island.all = []
-    Monomer.all = []
-    data._record = []
 
-# Evolution
+
+# ________________________________________________________________________________
+# Run a step of the simulation
+
 def run_step(layer, F, D1):
+    L = layer.L
 
     # Incoming flux
     for y in range(layer.L):
@@ -43,12 +38,12 @@ def run_step(layer, F, D1):
     # Return the new state of the layer as a matrix with 1 if there is a monomer, 0 otherwise
     return layer.heightmap()
 
-desc = archive.description(L=L, D1=D1, F=F)
-path = archive.new(desc)
 
-def run(save = False, verbose = True, parent_bar = None):
-    
-    clear()
+
+# ________________________________________________________________________________
+# Run an entire simulation
+
+def run(L, D1, F, N, steps, save = False, verbose = True, animation= True, parent_bar = None):
 
     layer = Layer(L)
     evolution = []
@@ -64,10 +59,12 @@ def run(save = False, verbose = True, parent_bar = None):
 
     # Base monomers (N monomers present at the begining of the simulation)
     for _ in range(N):
-        monomer = Monomer(layer)
+        Monomer(layer)
 
-    # Generating evolution<
-    if verbose: pbar = progress.Bar(max=steps, prefix=f"Simulating evolution")
+    # Generating evolution
+    if verbose:
+        pbar = progress.Bar(max=steps, prefix=f"Simulating evolution")
+
     for i in stepline:
         new_state = simulation.run_step(layer, F, D1)
         evolution.append(new_state)
@@ -89,6 +86,7 @@ def run(save = False, verbose = True, parent_bar = None):
         data.record()
         if verbose: pbar(i+1)
 
+    # Saving the simulation data
     if save:
         desc = archive.description(L=L, D1=D1, F=F)
         path = archive.new(desc)
@@ -96,6 +94,9 @@ def run(save = False, verbose = True, parent_bar = None):
         if verbose: print(f"Results saved in {path}")
 
         savez_compressed(f"{path}/Evolution.npy")
+
+    if animation:
+        animation.generate(evolution, monomers, free_monomers, stuck_monomers, islands, occuped_space, save_as = "res/animation.gif", plot=False, verbose = False)
 
 
     return evolution, monomers, free_monomers, stuck_monomers, occuped_space, islands, visited_sites, average_displacements

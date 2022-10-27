@@ -3,31 +3,70 @@ import matplotlib.pyplot as plt
 from LRFutils import progress
 from numba import njit
 import simulation
-from config import *
 import multiplot
-import os
-import numpy as np
+from classes.layer import Layer
+from classes.island import Island
+from classes.monomer import Monomer
+import data
+import gc
 
-def run(mode):
-    fig = plt.figure(figsize=(15, 10))
 
-    pbar = progress.Bar(number_of_simulations, "Running simulations")
 
+# ________________________________________________________________________________
+# Clear the previous simulation data
+
+def clear():
+
+    # Removing all objects of types Monomer, Island and Layer
+    for obj in gc.get_objects():
+        if isinstance(obj, Monomer) or isinstance(obj, Island) or isinstance(obj, Layer):
+            del obj
+
+    # Clearing the lists
+    Island.all = []
+    Monomer.all = []
+
+    # Clearing the records
+    data._record = []
+
+
+
+
+
+# ________________________________________________________________________________
+# Clear the previous simulation data
+
+def run(mode, L, D1, F, N, steps, number_of_simulations):
+    # Clearing plots
+    multiplot.setup(F, D1, L, steps, number_of_simulations)
+
+    # Creating a progress bar
+    pbar = progress.Bar(number_of_simulations, prefix="Bulk simulations", average_ETA=number_of_simulations)
+    pbar(0)
+
+    # Running several simulations
     for i in range(number_of_simulations):
-        
-        
-        evolution, monomers, free_monomers, stuck_monomers, occuped_space, islands, visited_sites, average_displacements = simulation.run(save = number_of_simulations == 1, verbose = number_of_simulations == 1, parent_bar = pbar)
+        # Updating progress bar
+        pbar(i+1)
+        # print(i, end=", ")
 
+        # Clearing the previous simulation data
+        clear()
+        
+        # Running one simulation
+        evolution, monomers, free_monomers, stuck_monomers, occuped_space, islands, visited_sites, average_displacements = simulation.run(L, D1, F, N, steps, save = number_of_simulations == 1, verbose = number_of_simulations == 1, animation = i==0, parent_bar = pbar)
+
+        # Getting x axis data
         if mode == "density":
             by = array(occuped_space) / (L**2)
         if mode == "iteration":
             by = arange(steps)
 
+        # Plotting data
         multiplot.record(
-            fig = fig,
             L = L,
             by = by,
-            ab_name = "Iteration",
+            by_name = mode,
             monomers = monomers,
             free_monomers = free_monomers,
             stuck_monomers = stuck_monomers,
@@ -35,20 +74,9 @@ def run(mode):
             islands = islands,
             visited_sites = visited_sites,
             average_displacements = average_displacements,
-            alpha = 0.1
+            alpha = 0.01,
+            simu = i
         )
-
-    pbar(i+1)
-
-    for i, ax in enumerate(multiplot.axes):
-        ax.grid()
-        # ax.legend()
-        if mode == "density": ax.set_xlabel("Density")
-        if mode == "iteration": ax.set_xlabel("Iteration")
-        if i in [0, 1, 3]:
-            ax.set_ylabel("Count")
-        for i in [2, 4, 5]:
-            ax.set_ylabel("Ratio")
-
-    fig.savefig(f"{mode}.png", facecolor='white')
-    plt.close()
+    
+    multiplot.save(mode)
+    multiplot.show()

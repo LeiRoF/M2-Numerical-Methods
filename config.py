@@ -7,4 +7,6 @@ N = 0 # L**2 / 100
 
 steps = 100
 
-number_of_simulations = 50
+number_of_simulations = 100
+
+mode = "density" # "density" or "iteration"
