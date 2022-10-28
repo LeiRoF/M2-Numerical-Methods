@@ -1,4 +1,5 @@
 from numpy import *
+seterr(all="ignore")
 import data
 import matplotlib.pyplot as plt
 

@@ -6,6 +6,8 @@ from numba import njit
 import os
 import json
 import matplotlib.pyplot as plt
+import gc
+import warnings
 
 # Import program classes
 from classes.layer import Layer
@@ -17,7 +19,7 @@ import simulation
 import data
 import animation
 
-
+simu_number = 0
 
 # ________________________________________________________________________________
 # Run a step of the simulation
@@ -41,9 +43,33 @@ def run_step(layer, F, D1):
 
 
 # ________________________________________________________________________________
+# Clear the previous simulation data
+
+def clear():
+
+    # Removing all objects of types Monomer, Island and Layer
+    for obj in gc.get_objects():
+        if isinstance(obj, Monomer) or isinstance(obj, Island) or isinstance(obj, Layer):
+            del obj
+
+    # Clearing the lists
+    Island.all = []
+    Monomer.all = []
+
+    # Clearing the records
+    data._record = []
+
+
+
+# ________________________________________________________________________________
 # Run an entire simulation
 
 def run(L, D1, F, N, steps, save = False, verbose = True, animate= True, parent_bar = None):
+    global simu_number
+    simu_number +=1
+
+    # Clearing the previous simulation data (for bulk simulation)
+    clear()
 
     layer = Layer(L)
     evolution = []
@@ -80,8 +106,10 @@ def run(L, D1, F, N, steps, save = False, verbose = True, animate= True, parent_
             if m in just_islanded:
                 just_islanded.remove(m)
 
-        visited_sites.append(mean([len(x.visited_sites) for x in just_islanded]))
-        average_displacements.append(mean([x.displacements for x in just_islanded]))
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+            visited_sites.append(mean([len(x.visited_sites) for x in just_islanded]))
+            average_displacements.append(mean([x.displacements for x in just_islanded]))
 
         data.record()
         if verbose:
@@ -117,5 +145,8 @@ def run(L, D1, F, N, steps, save = False, verbose = True, animate= True, parent_
 
     if animate:
         animation.generate(evolution, monomers, free_monomers, stuck_monomers, islands, occuped_space, save_as = "res/animation.gif", plot=False, verbose = False)
+
+    if not verbose and isinstance(parent_bar, progress.Bar):
+        parent_bar(simu_number)
 
     return res

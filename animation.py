@@ -8,6 +8,7 @@ from numpy import *
 from matplotlib.lines import Line2D
 import data
 import numpy as np
+np.seterr(all="ignore")
 
 def generate(evolution, monomer, free, stuck, island, occuped_space, save_as = None, plot=False, verbose = False, axis:int=0):
 

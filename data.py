@@ -1,4 +1,5 @@
 import numpy as np
+np.seterr(all="ignore")
 
 # Just an empty objet that will store all the data from a simulation
 class Storage():

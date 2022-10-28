@@ -1,4 +1,5 @@
 from numpy import *
+seterr(all="ignore")
 import matplotlib.pyplot as plt
 from LRFutils import progress
 from numba import njit
@@ -8,29 +9,9 @@ from classes.layer import Layer
 from classes.island import Island
 from classes.monomer import Monomer
 import data
-import gc
-from multiprocessing import Pool, Process, Manager, Value
+from multiprocessing import Pool, Process, Manager, Value, cpu_count
 from time import time
-
-
-
-# ________________________________________________________________________________
-# Clear the previous simulation data
-
-def clear():
-
-    # Removing all objects of types Monomer, Island and Layer
-    for obj in gc.get_objects():
-        if isinstance(obj, Monomer) or isinstance(obj, Island) or isinstance(obj, Layer):
-            del obj
-
-    # Clearing the lists
-    Island.all = []
-    Monomer.all = []
-
-    # Clearing the records
-    data._record = []
-
+from config import *
 
 
 
@@ -41,29 +22,12 @@ def clear():
 def run(mode, L, D1, F, N, steps, number_of_simulations):
     # Clearing plots
     multiplot.setup(F, D1, L, steps, number_of_simulations)
-    # Clearing the previous simulation data
-    clear()
 
-    monomers = []
-    free_monomers = []
-    stuck_monomers = []
-    occuped_space = []
-    islands = []
-    visited_sites = []
-    average_displacements = []
-    a = []
-    b = []
-    c = []
-    d = []
-    ah = []
-    k1 = []
-    k2 = []
-    k3 = []
-
-    start_time = time()
+    cores = cpu_count()
+    
+    
 
     parameters = [(
-        mode,
         L,
         D1,
         F,
@@ -71,16 +35,26 @@ def run(mode, L, D1, F, N, steps, number_of_simulations):
         steps,
         number_of_simulations == 1, # save
         number_of_simulations == 1, # verbose
-        # pbar,
-        # i==0, # animate
-    ) for i in range(number_of_simulations)]
+        number_of_simulations == 1, # animate
+    )]
 
-    bulk = Process(target=simulation.run, args=parameters)
-    bulk.start()
-    bulk.join()
+    main_loops = parameters * cores
+    last_loop = parameters * (number_of_simulations % cores)
 
-    print(f"Bulk simulation time: {time() - start_time}s")
-    print(bulk)
+    res = []
+    
+    pbar = progress.Bar(number_of_simulations, prefix=f"Runing simulations ({cores} by {cores})")
+    pbar(0)
+
+    for i in range(number_of_simulations // cores):
+        with Pool(cores) as p:
+            res += p.starmap(simulation.run, main_loops)
+        pbar((i+1)*cores)
+    
+    if number_of_simulations % cores != 0:
+        with Pool(number_of_simulations % cores) as p:
+            res += p.starmap(simulation.run, last_loop)
+        pbar(number_of_simulations)
 
     # Creating a progress bar
     pbar = progress.Bar(number_of_simulations, prefix="Generating plots")
@@ -94,7 +68,7 @@ def run(mode, L, D1, F, N, steps, number_of_simulations):
 
         # Getting x axis data
         if mode == "density":
-            by = array(mean(occuped_space, axis=0)) / (L**2)
+            by = array(mean([x.occuped_space for x in res], axis=0)) / (L**2)
         if mode == "iteration":
             by = arange(steps)
 
@@ -118,7 +92,7 @@ def run(mode, L, D1, F, N, steps, number_of_simulations):
             k1 = res[i].k1,
             k2 = res[i].k2,
             k3 = res[i].k3,
-            alpha = 0.01,
+            alpha = max(0.01, 1/number_of_simulations),
             simu = i+1 if number_of_simulations > 1 else i
         )
 
@@ -148,3 +122,6 @@ def run(mode, L, D1, F, N, steps, number_of_simulations):
     
     multiplot.save(mode)
     multiplot.show()
+
+if __name__ == "__main__":
+    run("iteration", L, D1, F, N, steps, number_of_simulations)

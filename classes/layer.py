@@ -1,4 +1,5 @@
 from numpy import *
+seterr(all="ignore")
 from typen import enforce_type_hints
 
 class Layer:
