@@ -109,7 +109,10 @@ def run(L, D1, F, N, steps, save = False, verbose = True, animate= True, parent_
         b = data.get_b_evolution(),
         c = data.get_c_evolution(),
         d = data.get_d_evolution(),
-        ah = data.get_ah_evolution()
+        ah = data.get_ah_evolution(),
+        k1 = data.get_k1_evolution(),
+        k2 = data.get_k2_evolution(),
+        k3 = data.get_k3_evolution()
     )
 
     if animate:

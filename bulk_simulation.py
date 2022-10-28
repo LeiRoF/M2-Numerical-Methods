@@ -9,7 +9,8 @@ from classes.island import Island
 from classes.monomer import Monomer
 import data
 import gc
-from multiprocessing import Process, Manager, Value
+from multiprocessing import Pool, Process, Manager, Value
+from time import time
 
 
 
@@ -40,6 +41,8 @@ def clear():
 def run(mode, L, D1, F, N, steps, number_of_simulations):
     # Clearing plots
     multiplot.setup(F, D1, L, steps, number_of_simulations)
+    # Clearing the previous simulation data
+    clear()
 
     monomers = []
     free_monomers = []
@@ -57,8 +60,30 @@ def run(mode, L, D1, F, N, steps, number_of_simulations):
     k2 = []
     k3 = []
 
+    start_time = time()
+
+    parameters = [(
+        mode,
+        L,
+        D1,
+        F,
+        N,
+        steps,
+        number_of_simulations == 1, # save
+        number_of_simulations == 1, # verbose
+        # pbar,
+        # i==0, # animate
+    ) for i in range(number_of_simulations)]
+
+    bulk = Process(target=simulation.run, args=parameters)
+    bulk.start()
+    bulk.join()
+
+    print(f"Bulk simulation time: {time() - start_time}s")
+    print(bulk)
+
     # Creating a progress bar
-    pbar = progress.Bar(number_of_simulations, prefix="Bulk simulations")
+    pbar = progress.Bar(number_of_simulations, prefix="Generating plots")
     pbar(0)
 
     # Running several simulations
@@ -66,28 +91,6 @@ def run(mode, L, D1, F, N, steps, number_of_simulations):
         # Updating progress bar
         pbar(i+1)
         # print(i, end=", ")
-
-        # Clearing the previous simulation data
-        clear()
-        
-        # Running one simulation
-        res = simulation.run(L, D1, F, N, steps, save = number_of_simulations == 1, verbose = number_of_simulations == 1, animate = i==0, parent_bar = pbar)
-        monomers.append(res[1])
-        free_monomers.append(res[2])
-        stuck_monomers.append(res[3])
-        occuped_space.append(res[4])
-        islands.append(res[5])
-        visited_sites.append(res[6])
-        average_displacements.append(res[7])
-
-        a.append(data.get_a_evolution())
-        b.append(data.get_b_evolution())
-        c.append(data.get_c_evolution())
-        d.append(data.get_d_evolution())
-        ah.append(data.get_ah_evolution())
-        k1.append(data.get_k1_evolution())
-        k2.append(data.get_k2_evolution())
-        k3.append(data.get_k3_evolution())
 
         # Getting x axis data
         if mode == "density":
@@ -100,21 +103,21 @@ def run(mode, L, D1, F, N, steps, number_of_simulations):
             L = L,
             by = by,
             by_name = mode,
-            monomers = monomers[-1],
-            free_monomers = free_monomers[-1],
-            stuck_monomers = stuck_monomers[-1],
-            occuped_space = occuped_space[-1],
-            islands = islands[-1],
-            visited_sites = visited_sites[-1],
-            average_displacements = average_displacements[-1],
-            a = a[-1],
-            b = b[-1],
-            c = c[-1],
-            d = d[-1],
-            ah = ah[-1],
-            k1 = k1[-1],
-            k2 = k2[-1],
-            k3 = k3[-1],
+            monomers = res[i].monomers,
+            free_monomers = res[i].free_monomers,
+            stuck_monomers = res[i].stuck_monomers,
+            occuped_space = res[i].occuped_space,
+            islands = res[i].islands,
+            visited_sites = res[i].visited_sites,
+            average_displacements = res[i].average_displacements,
+            a = res[i].a,
+            b = res[i].b,
+            c = res[i].c,
+            d = res[i].d,
+            ah = res[i].ah,
+            k1 = res[i].k1,
+            k2 = res[i].k2,
+            k3 = res[i].k3,
             alpha = 0.01,
             simu = i+1 if number_of_simulations > 1 else i
         )
@@ -124,21 +127,21 @@ def run(mode, L, D1, F, N, steps, number_of_simulations):
         L = L,
         by = by,
         by_name = mode,
-        monomers = mean(monomers, axis=0),
-        free_monomers = mean(free_monomers, axis=0),
-        stuck_monomers = mean(stuck_monomers, axis=0),
-        occuped_space = mean(occuped_space, axis=0),
-        islands = mean(islands, axis=0),
-        visited_sites = mean(visited_sites, axis=0),
-        average_displacements = mean(average_displacements, axis=0),
-        a = mean(a, axis=0),
-        b = mean(b, axis=0),
-        c = mean(c, axis=0),
-        d = mean(d, axis=0),
-        ah = mean(ah, axis=0),
-        k1 = mean(k1, axis=0),
-        k2 = mean(k2, axis=0),
-        k3 = mean(k3, axis=0),
+        monomers = mean([x.monomers for x in res], axis=0),
+        free_monomers = mean([x.free_monomers for x in res], axis=0),
+        stuck_monomers = mean([x.stuck_monomers for x in res], axis=0),
+        occuped_space = mean([x.occuped_space for x in res], axis=0),
+        islands = mean([x.islands for x in res], axis=0),
+        visited_sites = mean([x.visited_sites for x in res], axis=0),
+        average_displacements = mean([x.average_displacements for x in res], axis=0),
+        a = mean([x.a for x in res], axis=0),
+        b = mean([x.b for x in res], axis=0),
+        c = mean([x.c for x in res], axis=0),
+        d = mean([x.d for x in res], axis=0),
+        ah = mean([x.ah for x in res], axis=0),
+        k1 = mean([x.k1 for x in res], axis=0),
+        k2 = mean([x.k2 for x in res], axis=0),
+        k3 = mean([x.k3 for x in res], axis=0),
         alpha = 1,
         simu = 0
     )
