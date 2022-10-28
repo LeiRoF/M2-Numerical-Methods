@@ -96,8 +96,23 @@ def run(L, D1, F, N, steps, save = False, verbose = True, animate= True, parent_
 
         savez_compressed(f"{path}/Evolution.npy")
 
+    res = data.Storage(
+        evolution = evolution,
+        monomers = monomers,
+        free_monomers = free_monomers,
+        stuck_monomers = stuck_monomers,
+        occuped_space = occuped_space,
+        islands = islands,
+        visited_sites = visited_sites,
+        average_displacements = average_displacements,
+        a = data.get_a_evolution(),
+        b = data.get_b_evolution(),
+        c = data.get_c_evolution(),
+        d = data.get_d_evolution(),
+        ah = data.get_ah_evolution()
+    )
+
     if animate:
         animation.generate(evolution, monomers, free_monomers, stuck_monomers, islands, occuped_space, save_as = "res/animation.gif", plot=False, verbose = False)
 
-
-    return evolution, monomers, free_monomers, stuck_monomers, occuped_space, islands, visited_sites, average_displacements
+    return res

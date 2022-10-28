@@ -9,6 +9,7 @@ from classes.island import Island
 from classes.monomer import Monomer
 import data
 import gc
+from multiprocessing import Process, Manager, Value
 
 
 
