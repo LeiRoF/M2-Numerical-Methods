@@ -1,4 +1,5 @@
 from numpy import *
+seterr(all="ignore")
 from classes.layer import Layer
 from .island import Island
 import data

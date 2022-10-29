@@ -1,4 +1,25 @@
 import numpy as np
+np.seterr(all="ignore")
+
+# Just an empty objet that will store all the data from a simulation
+class Storage():
+    def __init__(self, **kwargs):
+        if "evolution" in kwargs: self.evolution = kwargs["evolution"]
+        if "monomers" in kwargs: self.monomers = kwargs["monomers"]
+        if "free_monomers" in kwargs: self.free_monomers = kwargs["free_monomers"]
+        if "stuck_monomers" in kwargs: self.stuck_monomers = kwargs["stuck_monomers"]
+        if "occuped_space" in kwargs: self.occuped_space = kwargs["occuped_space"]
+        if "islands" in kwargs: self.islands = kwargs["islands"]
+        if "visited_sites" in kwargs: self.visited_sites = kwargs["visited_sites"]
+        if "average_displacements" in kwargs: self.average_displacements = kwargs["average_displacements"]
+        if "a" in kwargs: self.a = kwargs["a"]
+        if "b" in kwargs: self.b = kwargs["b"]
+        if "c" in kwargs: self.c = kwargs["c"]
+        if "d" in kwargs: self.d = kwargs["d"]
+        if "ah" in kwargs: self.ah = kwargs["ah"]
+        if "k1" in kwargs: self.k1 = kwargs["k1"]
+        if "k2" in kwargs: self.k2 = kwargs["k2"]
+        if "k3" in kwargs: self.k3 = kwargs["k3"]
 
 # This file contain variable that store the occurrence of each events
 

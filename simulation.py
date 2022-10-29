@@ -3,10 +3,11 @@ from numpy import *
 from LRFutils import progress
 from LRFutils import archive
 from numba import njit
-import gc
 import os
 import json
 import matplotlib.pyplot as plt
+import gc
+import warnings
 
 # Import program classes
 from classes.layer import Layer
@@ -16,19 +17,15 @@ from classes.monomer import Monomer
 # import program modules
 import simulation
 import data
-from config import *
+import animation
 
-def clear():
-    plt.clf()
-    for obj in gc.get_objects():
-        if isinstance(obj, Monomer) or isinstance(obj, Island) or isinstance(obj, Layer):
-            del obj
-    Island.all = []
-    Monomer.all = []
-    data._record = []
+simu_number = 0
 
-# Evolution
+# ________________________________________________________________________________
+# Run a step of the simulation
+
 def run_step(layer, F, D1):
+    L = layer.L
 
     # Incoming flux
     for y in range(layer.L):
@@ -43,11 +40,35 @@ def run_step(layer, F, D1):
     # Return the new state of the layer as a matrix with 1 if there is a monomer, 0 otherwise
     return layer.heightmap()
 
-desc = archive.description(L=L, D1=D1, F=F)
-path = archive.new(desc)
 
-def run(save = False, verbose = True, parent_bar = None):
-    
+
+# ________________________________________________________________________________
+# Clear the previous simulation data
+
+def clear():
+
+    # Removing all objects of types Monomer, Island and Layer
+    for obj in gc.get_objects():
+        if isinstance(obj, Monomer) or isinstance(obj, Island) or isinstance(obj, Layer):
+            del obj
+
+    # Clearing the lists
+    Island.all = []
+    Monomer.all = []
+
+    # Clearing the records
+    data._record = []
+
+
+
+# ________________________________________________________________________________
+# Run an entire simulation
+
+def run(L, D1, F, N, steps, save = False, verbose = True, animate= True, parent_bar = None):
+    global simu_number
+    simu_number +=1
+
+    # Clearing the previous simulation data (for bulk simulation)
     clear()
 
     layer = Layer(L)
@@ -64,10 +85,12 @@ def run(save = False, verbose = True, parent_bar = None):
 
     # Base monomers (N monomers present at the begining of the simulation)
     for _ in range(N):
-        monomer = Monomer(layer)
+        Monomer(layer)
 
-    # Generating evolution<
-    if verbose: pbar = progress.Bar(max=steps, prefix=f"Simulating evolution")
+    # Generating evolution
+    if verbose:
+        pbar = progress.Bar(max=steps, prefix=f"Simulating evolution")
+
     for i in stepline:
         new_state = simulation.run_step(layer, F, D1)
         evolution.append(new_state)
@@ -83,12 +106,16 @@ def run(save = False, verbose = True, parent_bar = None):
             if m in just_islanded:
                 just_islanded.remove(m)
 
-        visited_sites.append(mean([len(x.visited_sites) for x in just_islanded]))
-        average_displacements.append(mean([x.displacements for x in just_islanded]))
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+            visited_sites.append(mean([len(x.visited_sites) for x in just_islanded]))
+            average_displacements.append(mean([x.displacements for x in just_islanded]))
 
         data.record()
-        if verbose: pbar(i+1)
+        if verbose:
+            pbar(i+1)
 
+    # Saving the simulation data
     if save:
         desc = archive.description(L=L, D1=D1, F=F)
         path = archive.new(desc)
@@ -97,5 +124,29 @@ def run(save = False, verbose = True, parent_bar = None):
 
         savez_compressed(f"{path}/Evolution.npy")
 
+    res = data.Storage(
+        evolution = evolution,
+        monomers = monomers,
+        free_monomers = free_monomers,
+        stuck_monomers = stuck_monomers,
+        occuped_space = occuped_space,
+        islands = islands,
+        visited_sites = visited_sites,
+        average_displacements = average_displacements,
+        a = data.get_a_evolution(),
+        b = data.get_b_evolution(),
+        c = data.get_c_evolution(),
+        d = data.get_d_evolution(),
+        ah = data.get_ah_evolution(),
+        k1 = data.get_k1_evolution(),
+        k2 = data.get_k2_evolution(),
+        k3 = data.get_k3_evolution()
+    )
 
-    return evolution, monomers, free_monomers, stuck_monomers, occuped_space, islands, visited_sites, average_displacements
+    if animate:
+        animation.generate(evolution, monomers, free_monomers, stuck_monomers, islands, occuped_space, save_as = "res/animation.gif", plot=False, verbose = False)
+
+    if not verbose and isinstance(parent_bar, progress.Bar):
+        parent_bar(simu_number)
+
+    return res
